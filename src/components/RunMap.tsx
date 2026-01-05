@@ -40,8 +40,8 @@ export function RunMap({
       attributionControl: false
     });
 
-    // Dark-themed tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Light-themed tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19
     }).addTo(mapRef.current);
 
