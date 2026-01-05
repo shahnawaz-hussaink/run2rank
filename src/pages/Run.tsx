@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Square, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/BottomNav';
-import { RunMap } from '@/components/RunMap';
+import { TerritoryMap } from '@/components/TerritoryMap';
 import { RunStatsDisplay } from '@/components/RunStatsDisplay';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns } from '@/hooks/useRuns';
 import { toast } from 'sonner';
+import { calculateConvexHull, expandPolygon } from '@/lib/territoryUtils';
 
 type RunState = 'idle' | 'ready' | 'running' | 'saving';
 
@@ -33,6 +34,13 @@ export default function RunPage() {
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Calculate preview territory from current path
+  const previewTerritory = useMemo(() => {
+    if (path.length < 3) return undefined;
+    const hull = calculateConvexHull(path);
+    return expandPolygon(hull, 30);
+  }, [path]);
 
   // Initialize position on mount
   useEffect(() => {
@@ -96,12 +104,18 @@ export default function RunPage() {
       return;
     }
 
-    // Save the run
+    // Calculate territory polygon from path
+    const territoryPolygon = result.path.length >= 3 
+      ? expandPolygon(calculateConvexHull(result.path), 30)
+      : [];
+
+    // Save the run with territory
     const { error } = await saveRun({
       pincode: profile?.pincode || '',
       distance_meters: result.distance,
       duration_seconds: duration,
       path_coordinates: result.path,
+      territory_polygon: territoryPolygon,
       started_at: startTime?.toISOString() || new Date().toISOString(),
       ended_at: new Date().toISOString(),
       is_valid: true
@@ -140,12 +154,15 @@ export default function RunPage() {
 
       {/* Map */}
       <div className="px-4 mb-4">
-        <RunMap
+        <TerritoryMap
           center={currentPosition || undefined}
           path={path}
           height="40vh"
           showCurrentLocation={true}
           isTracking={isTracking}
+          pincode={profile?.pincode}
+          showTerritories={true}
+          previewTerritory={previewTerritory}
         />
       </div>
 
