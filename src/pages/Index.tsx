@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Play, Trophy, MapPin, TrendingUp, Zap } from 'lucide-react';
+import { Play, Trophy, MapPin, TrendingUp, Zap, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/BottomNav';
+import { TerritoryMap } from '@/components/TerritoryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns } from '@/hooks/useRuns';
@@ -54,32 +54,53 @@ const Index = () => {
         </motion.div>
       </div>
 
+      {/* Territory Map Preview */}
+      {profile?.pincode && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mx-4 mb-4"
+        >
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <TerritoryMap
+              height="180px"
+              pincode={profile.pincode}
+              showTerritories={true}
+              showCurrentLocation={false}
+              zoom={13}
+            />
+          </div>
+        </motion.div>
+      )}
+
       {/* Territory Card */}
       {profile?.pincode ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.15 }}
           className="mx-4 mb-6"
         >
-          <div className="glass-card rounded-2xl p-5 gradient-border">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-primary" />
+          <div className="glass-card rounded-2xl p-4 gradient-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Your Territory</p>
+                  <p className="font-bold text-lg font-display">{profile.pincode}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Your Territory</p>
-                <p className="font-bold text-lg font-display">{profile.pincode}</p>
-              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate('/profile')}
+              >
+                Change
+              </Button>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => navigate('/profile')}
-              className="w-full"
-            >
-              Change Territory
-            </Button>
           </div>
         </motion.div>
       ) : (

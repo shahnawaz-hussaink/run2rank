@@ -9,6 +9,7 @@ export interface Run {
   distance_meters: number;
   duration_seconds: number;
   path_coordinates: Array<{ lat: number; lng: number }>;
+  territory_polygon: Array<{ lat: number; lng: number }>;
   started_at: string;
   ended_at: string | null;
   is_valid: boolean;
@@ -50,7 +51,10 @@ export function useRuns() {
         distance_meters: Number(run.distance_meters),
         path_coordinates: typeof run.path_coordinates === 'string' 
           ? JSON.parse(run.path_coordinates) 
-          : run.path_coordinates
+          : run.path_coordinates,
+        territory_polygon: typeof run.territory_polygon === 'string'
+          ? JSON.parse(run.territory_polygon)
+          : (run.territory_polygon || [])
       })) || [];
       
       setRuns(parsedRuns);
@@ -73,6 +77,7 @@ export function useRuns() {
           distance_meters: runData.distance_meters,
           duration_seconds: runData.duration_seconds,
           path_coordinates: runData.path_coordinates,
+          territory_polygon: runData.territory_polygon || [],
           started_at: runData.started_at,
           ended_at: runData.ended_at,
           is_valid: runData.is_valid

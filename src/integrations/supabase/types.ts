@@ -88,6 +88,7 @@ export type Database = {
           path_coordinates: Json
           pincode: string
           started_at: string
+          territory_polygon: Json | null
           user_id: string
         }
         Insert: {
@@ -100,6 +101,7 @@ export type Database = {
           path_coordinates?: Json
           pincode: string
           started_at: string
+          territory_polygon?: Json | null
           user_id: string
         }
         Update: {
@@ -112,13 +114,25 @@ export type Database = {
           path_coordinates?: Json
           pincode?: string
           started_at?: string
+          territory_polygon?: Json | null
           user_id?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      pincode_territories: {
+        Row: {
+          created_at: string | null
+          distance_meters: number | null
+          pincode: string | null
+          run_id: string | null
+          started_at: string | null
+          territory_polygon: Json | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
