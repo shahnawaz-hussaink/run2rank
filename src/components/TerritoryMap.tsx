@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { Coordinates } from '@/hooks/useGeolocation';
 import { Territory, useTerritories } from '@/hooks/useTerritories';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserPresence } from '@/hooks/useUserPresence';
 
 interface TerritoryMapProps {
   center?: Coordinates;
@@ -15,6 +16,7 @@ interface TerritoryMapProps {
   pincode?: string;
   showTerritories?: boolean;
   previewTerritory?: Coordinates[];
+  nearbyUsers?: UserPresence[];
 }
 
 export function TerritoryMap({ 
@@ -26,7 +28,8 @@ export function TerritoryMap({
   zoom = 15,
   pincode,
   showTerritories = true,
-  previewTerritory
+  previewTerritory,
+  nearbyUsers = []
 }: TerritoryMapProps) {
   const { user } = useAuth();
   const mapRef = useRef<L.Map | null>(null);
@@ -35,6 +38,7 @@ export function TerritoryMap({
   const markerRef = useRef<L.CircleMarker | null>(null);
   const territoryLayersRef = useRef<L.Polygon[]>([]);
   const previewLayerRef = useRef<L.Polygon | null>(null);
+  const nearbyUserMarkersRef = useRef<L.CircleMarker[]>([]);
   const [mapReady, setMapReady] = useState(false);
 
   const { territories } = useTerritories(showTerritories ? pincode || null : null);
@@ -84,10 +88,10 @@ export function TerritoryMap({
       markerRef.current.setLatLng([center.lat, center.lng]);
     } else {
       markerRef.current = L.circleMarker([center.lat, center.lng], {
-        radius: 10,
-        fillColor: '#22d3ee',
+        radius: 12,
+        fillColor: '#10b981',
         fillOpacity: 1,
-        color: '#0891b2',
+        color: '#ffffff',
         weight: 3
       }).addTo(mapRef.current);
     }
@@ -148,9 +152,9 @@ export function TerritoryMap({
       }).addTo(mapRef.current!);
 
       polygon.bindPopup(`
-        <div class="text-sm">
-          <strong>${territory.username}</strong><br/>
-          <span class="text-muted-foreground">
+        <div style="text-align: center; padding: 4px;">
+          <strong style="color: #1f2937;">${territory.username}</strong><br/>
+          <span style="color: #6b7280; font-size: 12px;">
             ${(territory.distance_meters / 1000).toFixed(2)} km covered
           </span>
         </div>
@@ -181,6 +185,39 @@ export function TerritoryMap({
       }).addTo(mapRef.current);
     }
   }, [previewTerritory, mapReady]);
+
+  // Draw nearby users
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+
+    // Clear existing markers
+    nearbyUserMarkersRef.current.forEach(marker => {
+      mapRef.current?.removeLayer(marker);
+    });
+    nearbyUserMarkersRef.current = [];
+
+    // Add markers for nearby users
+    nearbyUsers.forEach(nearbyUser => {
+      const marker = L.circleMarker([nearbyUser.latitude, nearbyUser.longitude], {
+        radius: 8,
+        fillColor: nearbyUser.is_running ? '#ef4444' : '#3b82f6',
+        fillOpacity: 0.9,
+        color: '#ffffff',
+        weight: 2
+      }).addTo(mapRef.current!);
+
+      marker.bindPopup(`
+        <div style="text-align: center; padding: 4px;">
+          <strong style="color: #1f2937;">${nearbyUser.username}</strong><br/>
+          <span style="color: ${nearbyUser.is_running ? '#ef4444' : '#6b7280'}; font-size: 12px;">
+            ${nearbyUser.is_running ? '🏃 Running' : 'Online'}
+          </span>
+        </div>
+      `);
+
+      nearbyUserMarkersRef.current.push(marker);
+    });
+  }, [nearbyUsers, mapReady]);
 
   return (
     <div 

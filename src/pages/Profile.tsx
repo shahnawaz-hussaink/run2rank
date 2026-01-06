@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BottomNav } from '@/components/BottomNav';
 import { RunHistoryList } from '@/components/RunHistoryList';
+import { UserAvatar } from '@/components/UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns, Run } from '@/hooks/useRuns';
@@ -26,8 +27,8 @@ export default function ProfilePage() {
   const { profile, loading: profileLoading, updateProfile } = useProfile();
   const { runs, loading: runsLoading } = useRuns();
   
-  const [username, setUsername] = useState(profile?.username || '');
-  const [pincode, setPincode] = useState(profile?.pincode || '');
+  const [username, setUsername] = useState('');
+  const [pincode, setPincode] = useState('');
   const [saving, setSaving] = useState(false);
   const [selectedRun, setSelectedRun] = useState<Run | null>(null);
 
@@ -68,159 +69,185 @@ export default function ProfilePage() {
   // Calculate total stats
   const totalDistance = runs.reduce((sum, run) => sum + run.distance_meters, 0);
   const totalTime = runs.reduce((sum, run) => sum + run.duration_seconds, 0);
+  const totalRuns = runs.length;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <User className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold font-display">
-                {profile?.username?.split('@')[0] || 'Runner'}
-              </h1>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut}>
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-cyan-50 pb-24">
+      {/* Decorative Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-200/40 to-cyan-200/40 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-cyan-200/40 to-emerald-200/40 rounded-full blur-3xl" />
       </div>
 
-      {/* Total Stats */}
-      <div className="px-4 mb-6">
-        <div className="grid grid-cols-2 gap-3">
-          <motion.div 
-            className="stat-card"
-            initial={{ opacity: 0, y: 20 }}
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="px-4 pt-6 pb-4">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            className="flex items-center justify-between"
           >
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Distance</p>
-            <p className="text-2xl font-bold font-display text-gradient">
-              {formatDistance(totalDistance)}
-            </p>
-          </motion.div>
-          <motion.div 
-            className="stat-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Time</p>
-            <p className="text-2xl font-bold font-display">
-              {formatDuration(totalTime)}
-            </p>
+            <div className="flex items-center gap-3">
+              <UserAvatar 
+                name={profile?.username || user?.email || 'User'} 
+                size="lg"
+              />
+              <div>
+                <h1 className="text-xl font-bold font-display text-gray-800">
+                  {profile?.username?.split('@')[0] || 'Runner'}
+                </h1>
+                <p className="text-sm text-gray-500">{user?.email}</p>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleSignOut}
+              className="text-gray-500 hover:text-red-500 hover:bg-red-50"
+            >
+              <LogOut className="w-5 h-5" />
+            </Button>
           </motion.div>
         </div>
-      </div>
 
-      {/* Profile Settings */}
-      <div className="px-4 mb-6">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <User className="w-5 h-5 text-primary" />
-          Profile Settings
-        </h2>
-        <motion.div 
-          className="glass-card rounded-xl p-4 space-y-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="space-y-2">
-            <Label htmlFor="username">Display Name</Label>
-            <Input
-              id="username"
-              placeholder="Your name"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="input-glow"
-            />
+        {/* Total Stats */}
+        <div className="px-4 mb-6">
+          <div className="grid grid-cols-3 gap-3">
+            <motion.div 
+              className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg shadow-gray-200/50 border border-white/50"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Distance</p>
+              <p className="text-xl font-bold font-display bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+                {formatDistance(totalDistance)}
+              </p>
+            </motion.div>
+            <motion.div 
+              className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg shadow-gray-200/50 border border-white/50"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Time</p>
+              <p className="text-xl font-bold font-display text-gray-800">
+                {formatDuration(totalTime)}
+              </p>
+            </motion.div>
+            <motion.div 
+              className="bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg shadow-gray-200/50 border border-white/50"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Runs</p>
+              <p className="text-xl font-bold font-display text-gray-800">{totalRuns}</p>
+            </motion.div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="pincode" className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" />
-              Your Territory (Pincode)
-            </Label>
-            <Input
-              id="pincode"
-              placeholder="e.g., 10001"
-              value={pincode}
-              onChange={(e) => setPincode(e.target.value)}
-              className="input-glow"
-            />
-            <p className="text-xs text-muted-foreground">
-              Only runs in this pincode will count towards the leaderboard
-            </p>
-          </div>
+        </div>
 
-          <Button 
-            onClick={handleSave} 
-            className="w-full btn-glow"
-            disabled={saving}
+        {/* Profile Settings */}
+        <div className="px-4 mb-6">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-gray-800">
+            <User className="w-5 h-5 text-emerald-500" />
+            Profile Settings
+          </h2>
+          <motion.div 
+            className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-lg shadow-gray-200/50 border border-white/50 space-y-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
           >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save Changes
-          </Button>
-        </motion.div>
-      </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="username" className="text-gray-700 text-sm font-medium">Display Name</Label>
+              <Input
+                id="username"
+                placeholder="Your name"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="h-11 bg-gray-50/50 border-gray-200 rounded-xl focus:bg-white focus:border-emerald-400"
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <Label htmlFor="pincode" className="flex items-center gap-2 text-gray-700 text-sm font-medium">
+                <MapPin className="w-4 h-4 text-emerald-500" />
+                Your Territory (Pincode)
+              </Label>
+              <Input
+                id="pincode"
+                placeholder="e.g., 10001"
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value)}
+                className="h-11 bg-gray-50/50 border-gray-200 rounded-xl focus:bg-white focus:border-emerald-400"
+              />
+              <p className="text-xs text-gray-400">
+                Only runs in this pincode will count towards the leaderboard
+              </p>
+            </div>
 
-      {/* Run History */}
-      <div className="px-4">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <History className="w-5 h-5 text-primary" />
-          Run History
-        </h2>
-        {runsLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
-        ) : (
-          <RunHistoryList 
-            runs={runs.slice(0, 10)} 
-            onRunClick={(run) => setSelectedRun(run)} 
-          />
-        )}
+            <Button 
+              onClick={handleSave} 
+              className="w-full h-11 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white rounded-xl font-semibold shadow-lg shadow-emerald-500/30"
+              disabled={saving}
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
+          </motion.div>
+        </div>
+
+        {/* Run History */}
+        <div className="px-4">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-gray-800">
+            <History className="w-5 h-5 text-emerald-500" />
+            Run History
+          </h2>
+          {runsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+            </div>
+          ) : (
+            <RunHistoryList 
+              runs={runs.slice(0, 10)} 
+              onRunClick={(run) => setSelectedRun(run)} 
+            />
+          )}
+        </div>
       </div>
 
       {/* Run Detail Dialog */}
       <Dialog open={!!selectedRun} onOpenChange={() => setSelectedRun(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg bg-white">
           <DialogHeader>
-            <DialogTitle>Run Details</DialogTitle>
+            <DialogTitle className="text-gray-800">Run Details</DialogTitle>
           </DialogHeader>
           {selectedRun && (
             <div className="space-y-4">
-              <RunMap
-                path={selectedRun.path_coordinates}
-                height="200px"
-                showCurrentLocation={false}
-              />
+              <div className="rounded-xl overflow-hidden">
+                <RunMap
+                  path={selectedRun.path_coordinates}
+                  height="200px"
+                  showCurrentLocation={false}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-3">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Distance</p>
-                  <p className="font-bold text-lg">{formatDistance(selectedRun.distance_meters)}</p>
+                <div className="text-center bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500">Distance</p>
+                  <p className="font-bold text-lg text-gray-800">{formatDistance(selectedRun.distance_meters)}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Time</p>
-                  <p className="font-bold text-lg">{formatDuration(selectedRun.duration_seconds)}</p>
+                <div className="text-center bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500">Time</p>
+                  <p className="font-bold text-lg text-gray-800">{formatDuration(selectedRun.duration_seconds)}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Territory</p>
-                  <p className="font-bold text-lg">{selectedRun.pincode}</p>
+                <div className="text-center bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500">Territory</p>
+                  <p className="font-bold text-lg text-gray-800">{selectedRun.pincode}</p>
                 </div>
               </div>
             </div>

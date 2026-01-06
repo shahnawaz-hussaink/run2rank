@@ -9,6 +9,7 @@ import { RunStatsDisplay } from '@/components/RunStatsDisplay';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns } from '@/hooks/useRuns';
+import { useUserPresence } from '@/hooks/useUserPresence';
 import { toast } from 'sonner';
 import { calculateConvexHull, expandPolygon } from '@/lib/territoryUtils';
 
@@ -30,6 +31,8 @@ export default function RunPage() {
     resetTracking
   } = useGeolocation();
 
+  const { nearbyUsers, updatePresence, clearPresence } = useUserPresence(profile?.pincode || null);
+
   const [runState, setRunState] = useState<RunState>('idle');
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -46,14 +49,30 @@ export default function RunPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        await getCurrentPosition();
+        const pos = await getCurrentPosition();
+        if (pos && profile?.pincode) {
+          updatePresence(pos, false);
+        }
         setRunState('ready');
       } catch (err) {
         console.error('Failed to get initial position:', err);
+        // Still allow user to try starting
+        setRunState('ready');
       }
     };
     init();
+
+    return () => {
+      clearPresence();
+    };
   }, []);
+
+  // Update presence while running
+  useEffect(() => {
+    if (isTracking && currentPosition && profile?.pincode) {
+      updatePresence(currentPosition, true);
+    }
+  }, [currentPosition, isTracking, profile?.pincode]);
 
   // Timer effect
   useEffect(() => {
@@ -98,6 +117,11 @@ export default function RunPage() {
       clearInterval(timerRef.current);
     }
 
+    // Update presence to not running
+    if (currentPosition && profile?.pincode) {
+      updatePresence(currentPosition, false);
+    }
+
     if (result.path.length < 2) {
       toast.error('Run too short to save');
       setRunState('ready');
@@ -130,116 +154,151 @@ export default function RunPage() {
       setDuration(0);
       setStartTime(null);
     }
-  }, [stopTracking, duration, startTime, profile, saveRun]);
+  }, [stopTracking, duration, startTime, profile, saveRun, currentPosition, updatePresence]);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-2xl font-bold font-display">
-            {runState === 'running' ? 'Running' : 'Start a Run'}
-          </h1>
-          {profile?.pincode && (
-            <p className="text-muted-foreground flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              Territory: {profile.pincode}
-            </p>
-          )}
-        </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-cyan-50 pb-24">
+      {/* Decorative Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-200/40 to-cyan-200/40 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-cyan-200/40 to-emerald-200/40 rounded-full blur-3xl" />
       </div>
 
-      {/* Map */}
-      <div className="px-4 mb-4">
-        <TerritoryMap
-          center={currentPosition || undefined}
-          path={path}
-          height="40vh"
-          showCurrentLocation={true}
-          isTracking={isTracking}
-          pincode={profile?.pincode}
-          showTerritories={true}
-          previewTerritory={previewTerritory}
-        />
-      </div>
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="px-4 pt-6 pb-4">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h1 className="text-2xl font-bold font-display text-gray-800">
+              {runState === 'running' ? 'Running' : 'Start a Run'}
+            </h1>
+            {profile?.pincode && (
+              <p className="text-gray-500 flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                Territory: {profile.pincode}
+              </p>
+            )}
+          </motion.div>
+        </div>
 
-      {/* Error Display */}
-      <AnimatePresence>
-        {error && (
+        {/* Map */}
+        <div className="px-4 mb-4">
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden shadow-lg shadow-gray-200/50 border border-white/50">
+            <TerritoryMap
+              center={currentPosition || undefined}
+              path={path}
+              height="50vh"
+              showCurrentLocation={true}
+              isTracking={isTracking}
+              pincode={profile?.pincode}
+              showTerritories={true}
+              previewTerritory={previewTerritory}
+              nearbyUsers={nearbyUsers}
+            />
+          </div>
+        </div>
+
+        {/* Nearby runners indicator */}
+        {nearbyUsers.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mx-4 mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2"
+            className="mx-4 mb-4"
           >
-            <AlertCircle className="w-5 h-5 text-destructive" />
-            <p className="text-sm text-destructive">{error}</p>
+            <div className="bg-white/80 backdrop-blur-xl rounded-xl p-3 shadow-lg shadow-gray-200/50 border border-white/50 flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {nearbyUsers.slice(0, 3).map((user, i) => (
+                  <div 
+                    key={user.id} 
+                    className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold border-2 border-white"
+                  >
+                    {user.username?.[0]?.toUpperCase() || '?'}
+                  </div>
+                ))}
+              </div>
+              <span className="text-sm text-gray-600">
+                {nearbyUsers.length} {nearbyUsers.length === 1 ? 'runner' : 'runners'} nearby
+              </span>
+            </div>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      {/* Stats Display */}
-      <div className="px-4 mb-6">
-        <RunStatsDisplay 
-          distance={distance} 
-          duration={duration}
-          isLive={isTracking}
-        />
-      </div>
-
-      {/* Control Button */}
-      <div className="px-4">
-        {runState === 'idle' && (
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-2" />
-            <p className="text-muted-foreground">Getting your location...</p>
-          </div>
-        )}
-
-        {runState === 'ready' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <Button 
-              className="w-full h-20 text-xl btn-glow flex items-center justify-center gap-3"
-              onClick={handleStartRun}
+        {/* Error Display */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mx-4 mb-4 p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2"
             >
-              <Play className="w-8 h-8" />
-              Start Run
-            </Button>
-          </motion.div>
-        )}
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <p className="text-sm text-red-600">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {runState === 'running' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <Button 
-              variant="destructive"
-              className="w-full h-20 text-xl flex items-center justify-center gap-3"
-              onClick={handleStopRun}
+        {/* Stats Display */}
+        <div className="px-4 mb-6">
+          <RunStatsDisplay 
+            distance={distance} 
+            duration={duration}
+            isLive={isTracking}
+          />
+        </div>
+
+        {/* Control Button */}
+        <div className="px-4">
+          {runState === 'idle' && (
+            <div className="text-center bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-gray-200/50 border border-white/50">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-emerald-500 mb-2" />
+              <p className="text-gray-500">Getting your location...</p>
+            </div>
+          )}
+
+          {runState === 'ready' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
             >
-              <Square className="w-8 h-8" />
-              Stop Run
-            </Button>
-            <p className="text-center text-sm text-muted-foreground mt-3">
-              <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse mr-2" />
-              GPS tracking active
-            </p>
-          </motion.div>
-        )}
+              <Button 
+                className="w-full h-20 text-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white rounded-2xl font-semibold shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-3"
+                onClick={handleStartRun}
+              >
+                <Play className="w-8 h-8" />
+                Start Run
+              </Button>
+            </motion.div>
+          )}
 
-        {runState === 'saving' && (
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-2" />
-            <p className="text-muted-foreground">Saving your run...</p>
-          </div>
-        )}
+          {runState === 'running' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              <Button 
+                className="w-full h-20 text-xl bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white rounded-2xl font-semibold shadow-lg shadow-red-500/30 flex items-center justify-center gap-3"
+                onClick={handleStopRun}
+              >
+                <Square className="w-8 h-8" />
+                Stop Run
+              </Button>
+              <p className="text-center text-sm text-gray-500 mt-3 flex items-center justify-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                GPS tracking active
+              </p>
+            </motion.div>
+          )}
+
+          {runState === 'saving' && (
+            <div className="text-center bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-gray-200/50 border border-white/50">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-emerald-500 mb-2" />
+              <p className="text-gray-500">Saving your run...</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <BottomNav />

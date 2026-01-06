@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Run from "./pages/Run";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
+import Health from "./pages/Health";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/health"
+              element={
+                <ProtectedRoute>
+                  <Health />
                 </ProtectedRoute>
               }
             />

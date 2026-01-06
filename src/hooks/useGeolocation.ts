@@ -51,6 +51,12 @@ export function useGeolocation() {
         return;
       }
 
+      // Check for secure context (required for iOS)
+      if (window.isSecureContext === false) {
+        reject(new Error('Geolocation requires a secure connection (HTTPS)'));
+        return;
+      }
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const coords: Coordinates = {
@@ -66,13 +72,13 @@ export function useGeolocation() {
           let errorMessage = 'Failed to get location';
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = 'Location permission denied. Please enable GPS access.';
+              errorMessage = 'Location permission denied. Please enable location access in your device settings.';
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Location information unavailable.';
+              errorMessage = 'Location information unavailable. Please ensure GPS is enabled.';
               break;
             case error.TIMEOUT:
-              errorMessage = 'Location request timed out.';
+              errorMessage = 'Location request timed out. Please try again.';
               break;
           }
           setState(prev => ({ ...prev, error: errorMessage }));
@@ -80,7 +86,7 @@ export function useGeolocation() {
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
+          timeout: 30000, // Increased timeout for iOS
           maximumAge: 0
         }
       );
@@ -114,8 +120,10 @@ export function useGeolocation() {
           timestamp: position.timestamp
         };
 
-        // Only add point if accuracy is reasonable (< 30 meters)
-        if (position.coords.accuracy <= 30) {
+        // Accept wider accuracy for iOS devices (up to 50m), but filter jitter
+        const maxAccuracy = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 50 : 30;
+        
+        if (position.coords.accuracy <= maxAccuracy) {
           // Calculate distance from last point
           if (pathRef.current.length > 0) {
             const lastPoint = pathRef.current[pathRef.current.length - 1];
@@ -143,21 +151,22 @@ export function useGeolocation() {
         let errorMessage = 'GPS error during tracking';
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Location permission denied';
+            errorMessage = 'Location permission denied. Please enable in Settings.';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'GPS signal lost';
+            errorMessage = 'GPS signal lost. Move to an open area.';
             break;
           case error.TIMEOUT:
-            errorMessage = 'GPS timeout';
+            errorMessage = 'GPS timeout. Retrying...';
             break;
         }
         setState(prev => ({ ...prev, error: errorMessage }));
       },
       {
         enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
+        timeout: 30000, // Increased timeout for iOS
+        maximumAge: 2000, // Allow slightly cached positions for smoother tracking
+        // iOS specific: lower distanceFilter helps with accuracy
       }
     );
   }, []);
