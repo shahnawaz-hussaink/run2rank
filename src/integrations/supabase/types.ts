@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      health_data: {
+        Row: {
+          activity_level: string | null
+          age: number | null
+          bmi: number | null
+          bmr: number | null
+          created_at: string
+          daily_calories_goal: number | null
+          daily_steps_goal: number | null
+          gender: string | null
+          height_cm: number | null
+          id: string
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          activity_level?: string | null
+          age?: number | null
+          bmi?: number | null
+          bmr?: number | null
+          created_at?: string
+          daily_calories_goal?: number | null
+          daily_steps_goal?: number | null
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          activity_level?: string | null
+          age?: number | null
+          bmi?: number | null
+          bmr?: number | null
+          created_at?: string
+          daily_calories_goal?: number | null
+          daily_steps_goal?: number | null
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       monthly_stats: {
         Row: {
           id: string
@@ -115,6 +163,39 @@ export type Database = {
           pincode?: string
           started_at?: string
           territory_polygon?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          created_at: string
+          id: string
+          is_running: boolean | null
+          last_seen: string
+          latitude: number
+          longitude: number
+          pincode: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_running?: boolean | null
+          last_seen?: string
+          latitude: number
+          longitude: number
+          pincode: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_running?: boolean | null
+          last_seen?: string
+          latitude?: number
+          longitude?: number
+          pincode?: string
           user_id?: string
         }
         Relationships: []
