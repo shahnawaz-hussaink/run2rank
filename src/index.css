@@ -41,6 +41,7 @@
     /* Borders and inputs */
     --border: 220 15% 20%;
     --input: 220 15% 15%;
+    --input-text: 220 10% 10%;
     --ring: 160 84% 45%;
 
     --radius: 0.75rem;
