@@ -36,14 +36,14 @@ const Index = () => {
   const username = profile?.username?.split('@')[0] || 'Runner';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-cyan-50 pb-24">
+    <div className="flex flex-col min-h-full bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
       {/* Decorative Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-200/40 to-cyan-200/40 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-cyan-200/40 to-emerald-200/40 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10">
+      <div className="flex-1 relative z-10 pb-4">
         {/* Header */}
         <div className="px-4 pt-6 pb-4">
           <motion.div
