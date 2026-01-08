@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Square, MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { Play, Square, MapPin, AlertCircle, Loader2, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/BottomNav';
 import { TerritoryMap } from '@/components/TerritoryMap';
 import { RunStatsDisplay } from '@/components/RunStatsDisplay';
+import { PageHeader } from '@/components/PageHeader';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns } from '@/hooks/useRuns';
@@ -166,22 +167,12 @@ export default function RunPage() {
 
       <div className="flex-1 relative z-10 pb-4">
         {/* Header */}
-        <div className="px-4 pt-6 pb-4">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h1 className="text-2xl font-bold font-display text-gray-800">
-              {runState === 'running' ? 'Running' : 'Start a Run'}
-            </h1>
-            {profile?.pincode && (
-              <p className="text-gray-500 flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                Territory: {profile.pincode}
-              </p>
-            )}
-          </motion.div>
-        </div>
+        <PageHeader 
+          title={runState === 'running' ? 'Running' : 'Start a Run'}
+          subtitle={profile?.pincode ? `Territory: ${profile.pincode}` : undefined}
+          icon={Navigation}
+          iconGradient="from-emerald-500 to-cyan-500"
+        />
 
         {/* Map */}
         <div className="px-4 mb-4">

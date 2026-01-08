@@ -4,6 +4,7 @@ import { Play, Trophy, MapPin, TrendingUp, Zap, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/BottomNav';
 import { TerritoryMap } from '@/components/TerritoryMap';
+import { PageHeader } from '@/components/PageHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns } from '@/hooks/useRuns';
@@ -45,21 +46,12 @@ const Index = () => {
 
       <div className="flex-1 relative z-10 pb-4">
         {/* Header */}
-        <div className="px-4 pt-6 pb-4">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
-          >
-            <div>
-              <p className="text-gray-500 text-sm">{greeting()}</p>
-              <h1 className="text-2xl font-bold font-display text-gray-800">{username}</h1>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-          </motion.div>
-        </div>
+        <PageHeader 
+          title={username}
+          subtitle={greeting()}
+          icon={Zap}
+          iconGradient="from-emerald-500 to-cyan-500"
+        />
 
         {/* Territory Map Preview */}
         {profile?.pincode && (

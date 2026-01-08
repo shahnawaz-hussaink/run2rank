@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/BottomNav';
 import { LeaderboardList } from '@/components/LeaderboardList';
+import { PageHeader } from '@/components/PageHeader';
 import { useProfile } from '@/hooks/useProfile';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 
@@ -44,22 +45,12 @@ export default function LeaderboardPage() {
 
       <div className="flex-1 relative z-10 pb-4">
         {/* Header */}
-        <div className="px-4 pt-6 pb-4">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                <Trophy className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold font-display text-gray-800">Leaderboard</h1>
-                <p className="text-gray-500 text-sm">{currentMonth}</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+        <PageHeader 
+          title="Leaderboard"
+          subtitle={currentMonth}
+          icon={Trophy}
+          iconGradient="from-amber-400 to-orange-500"
+        />
 
         {/* Pincode Search */}
         <div className="px-4 mb-6">
