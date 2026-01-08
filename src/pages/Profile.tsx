@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { BottomNav } from '@/components/BottomNav';
 import { RunHistoryList } from '@/components/RunHistoryList';
 import { UserAvatar } from '@/components/UserAvatar';
+import { PageHeader } from '@/components/PageHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns, Run } from '@/hooks/useRuns';
@@ -81,24 +82,12 @@ export default function ProfilePage() {
 
       <div className="flex-1 relative z-10 pb-4">
         {/* Header */}
-        <div className="px-4 pt-6 pb-4">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <UserAvatar 
-                name={profile?.username || user?.email || 'User'} 
-                size="lg"
-              />
-              <div>
-                <h1 className="text-xl font-bold font-display text-gray-800">
-                  {profile?.username?.split('@')[0] || 'Runner'}
-                </h1>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-              </div>
-            </div>
+        <PageHeader 
+          title={profile?.username?.split('@')[0] || 'Runner'}
+          subtitle={user?.email}
+          icon={User}
+          iconGradient="from-violet-500 to-purple-500"
+          rightElement={
             <Button 
               variant="ghost" 
               size="icon" 
@@ -107,8 +96,8 @@ export default function ProfilePage() {
             >
               <LogOut className="w-5 h-5" />
             </Button>
-          </motion.div>
-        </div>
+          }
+        />
 
         {/* Total Stats */}
         <div className="px-4 mb-6">
