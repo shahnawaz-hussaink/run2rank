@@ -400,19 +400,25 @@ export default function AuthPage() {
               </Button>
             </form>
 
-            <div className="mt-5 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setFormData({ name: '', email: '', password: '', confirmPassword: '', pincode: '' });
-                  setAvatarPreview(null);
-                  setAvatarFile(null);
-                }}
-                className="text-sm text-gray-500 hover:text-emerald-600 transition-colors font-medium"
-              >
-                {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-              </button>
+            {/* Toggle Auth Mode */}
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 rounded-2xl p-4 text-center">
+                <p className="text-sm text-gray-600 mb-2">
+                  {isLogin ? "New to Run2Rank?" : "Already a runner?"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setFormData({ name: '', email: '', password: '', confirmPassword: '', pincode: '' });
+                    setAvatarPreview(null);
+                    setAvatarFile(null);
+                  }}
+                  className="text-base font-semibold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent hover:from-emerald-700 hover:to-cyan-700 transition-colors"
+                >
+                  {isLogin ? "Create your account →" : "Sign in to your account →"}
+                </button>
+              </div>
             </div>
           </motion.div>
 

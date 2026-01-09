@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Scale, Ruler, Activity, Target, Flame, Footprints, Save, Loader2, Droplets, TrendingUp, Zap, Award, Plus, Minus } from 'lucide-react';
+import { Heart, Scale, Ruler, Activity, Target, Flame, Footprints, Save, Loader2, Droplets, TrendingUp, Zap, Award, Plus, Minus, Utensils, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { useRuns } from '@/hooks/useRuns';
 import { toast } from 'sonner';
 
 export default function HealthPage() {
+  const navigate = useNavigate();
   const { healthData, loading, saveHealthData, calculateDailyCalories } = useHealthData();
   const { runs } = useRuns();
   const [saving, setSaving] = useState(false);
@@ -324,6 +326,30 @@ export default function HealthPage() {
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <p className="text-xs text-gray-500">Basal Metabolic Rate: <span className="font-semibold text-gray-700">{healthData.bmr} kcal/day</span></p>
                   </div>
+                )}
+                
+                {/* Nutrition Recommendation Button - shows for underweight or overweight */}
+                {(healthData.bmi < 18.5 || healthData.bmi >= 25) && (
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    onClick={() => navigate('/nutrition')}
+                    className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white rounded-xl p-3 flex items-center justify-between shadow-lg shadow-emerald-500/20 transition-all hover:shadow-xl"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <Utensils className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-sm">Get Nutrition Tips</p>
+                        <p className="text-xs text-white/80">
+                          {healthData.bmi < 18.5 ? 'Foods to help gain healthy weight' : 'Foods to help achieve ideal BMI'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-white/80" />
+                  </motion.button>
                 )}
               </div>
             </motion.div>
