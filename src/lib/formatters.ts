@@ -16,15 +16,36 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Format pace from average (distance in meters, duration in seconds)
 export function formatPace(meters: number, seconds: number): string {
   if (meters === 0 || seconds === 0) return '--:--';
   
-  const kmPerSecond = meters / 1000 / seconds;
-  const secondsPerKm = 1 / kmPerSecond;
+  // Calculate seconds per kilometer
+  const secondsPerKm = (seconds / meters) * 1000;
+  
+  // Cap at reasonable pace (max 30 min/km for walking)
+  if (secondsPerKm > 1800) return '--:--';
+  
   const paceMinutes = Math.floor(secondsPerKm / 60);
   const paceSeconds = Math.round(secondsPerKm % 60);
   
-  return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}/km`;
+  return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}`;
+}
+
+// Format real-time pace from seconds per km
+export function formatCurrentPace(secondsPerKm: number): string {
+  if (secondsPerKm === 0 || secondsPerKm > 1800) return '--:--';
+  
+  const paceMinutes = Math.floor(secondsPerKm / 60);
+  const paceSeconds = Math.round(secondsPerKm % 60);
+  
+  return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}`;
+}
+
+// Format speed in km/h
+export function formatSpeed(metersPerSecond: number): string {
+  const kmh = metersPerSecond * 3.6;
+  return `${kmh.toFixed(1)} km/h`;
 }
 
 export function formatDate(dateString: string): string {
