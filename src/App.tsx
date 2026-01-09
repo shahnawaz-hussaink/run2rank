@@ -12,6 +12,7 @@ import Run from "./pages/Run";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Health from "./pages/Health";
+import Nutrition from "./pages/Nutrition";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Health />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/nutrition"
+                element={
+                  <ProtectedRoute>
+                    <Nutrition />
                   </ProtectedRoute>
                 }
               />
