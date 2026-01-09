@@ -26,6 +26,7 @@ export default function RunPage() {
     isTracking,
     path,
     distance,
+    currentPace,
     getCurrentPosition,
     startTracking,
     stopTracking,
@@ -237,6 +238,7 @@ export default function RunPage() {
             distance={distance} 
             duration={duration}
             isLive={isTracking}
+            currentPace={currentPace}
           />
         </div>
 
