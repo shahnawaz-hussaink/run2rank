@@ -5,6 +5,7 @@ import { Coordinates } from '@/hooks/useGeolocation';
 import { Territory, useTerritories } from '@/hooks/useTerritories';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserPresence } from '@/hooks/useUserPresence';
+import { getCentroid } from '@/lib/territoryUtils';
 
 interface TerritoryMapProps {
   center?: Coordinates;
@@ -18,6 +19,31 @@ interface TerritoryMapProps {
   previewTerritory?: Coordinates[];
   nearbyUsers?: UserPresence[];
 }
+
+// Territory color palette - vibrant and distinguishable
+const TERRITORY_COLORS = [
+  '#10b981', // emerald
+  '#3b82f6', // blue
+  '#f59e0b', // amber
+  '#ef4444', // red
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#84cc16', // lime
+  '#f97316', // orange
+  '#6366f1', // indigo
+];
+
+// Get consistent color for a user
+const getUserColor = (userId: string, index: number): string => {
+  // Use user ID hash for consistent color
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colorIndex = Math.abs(hash) % TERRITORY_COLORS.length;
+  return TERRITORY_COLORS[colorIndex];
+};
 
 export function TerritoryMap({ 
   center, 
@@ -36,7 +62,7 @@ export function TerritoryMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const pathLineRef = useRef<L.Polyline | null>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
-  const territoryLayersRef = useRef<L.Polygon[]>([]);
+  const territoryLayersRef = useRef<L.Layer[]>([]);
   const previewLayerRef = useRef<L.Polygon | null>(null);
   const nearbyUserMarkersRef = useRef<L.CircleMarker[]>([]);
   const [mapReady, setMapReady] = useState(false);
@@ -94,6 +120,13 @@ export function TerritoryMap({
         color: '#ffffff',
         weight: 3
       }).addTo(mapRef.current);
+      
+      // Add pulsing effect element
+      markerRef.current.bindTooltip('You are here', {
+        permanent: false,
+        direction: 'top',
+        className: 'location-tooltip'
+      });
     }
   }, [center, showCurrentLocation]);
 
@@ -123,7 +156,7 @@ export function TerritoryMap({
     }
   }, [path, isTracking]);
 
-  // Draw territories
+  // Draw territories with colors and labels
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
 
@@ -134,7 +167,7 @@ export function TerritoryMap({
     territoryLayersRef.current = [];
 
     // Draw each territory
-    territories.forEach(territory => {
+    territories.forEach((territory, index) => {
       if (territory.territory_polygon.length < 3) return;
 
       const latLngs: L.LatLngExpression[] = territory.territory_polygon.map(
@@ -142,25 +175,62 @@ export function TerritoryMap({
       );
 
       const isOwnTerritory = territory.user_id === user?.id;
+      const color = getUserColor(territory.user_id, index);
       
+      // Create polygon with territory color
       const polygon = L.polygon(latLngs, {
-        color: territory.color,
-        fillColor: territory.color,
+        color: color,
+        fillColor: color,
         fillOpacity: isOwnTerritory ? 0.4 : 0.25,
         weight: isOwnTerritory ? 3 : 2,
         dashArray: isOwnTerritory ? undefined : '5, 5'
       }).addTo(mapRef.current!);
 
+      // Add popup with territory info
       polygon.bindPopup(`
-        <div style="text-align: center; padding: 4px;">
-          <strong style="color: #1f2937;">${territory.username}</strong><br/>
+        <div style="text-align: center; padding: 8px; min-width: 120px;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></div>
+            <strong style="color: #1f2937; font-size: 14px;">${territory.username}</strong>
+          </div>
           <span style="color: #6b7280; font-size: 12px;">
             ${(territory.distance_meters / 1000).toFixed(2)} km covered
           </span>
+          ${isOwnTerritory ? '<br/><span style="color: #10b981; font-size: 11px; font-weight: 500;">Your territory</span>' : ''}
         </div>
       `);
 
       territoryLayersRef.current.push(polygon);
+
+      // Add label marker at centroid
+      const centroid = getCentroid(territory.territory_polygon);
+      const labelIcon = L.divIcon({
+        className: 'territory-label',
+        html: `
+          <div style="
+            background: ${color};
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: 2px solid white;
+          ">
+            ${territory.username?.split('@')[0] || 'Runner'}
+          </div>
+        `,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0]
+      });
+
+      const labelMarker = L.marker([centroid.lat, centroid.lng], { 
+        icon: labelIcon,
+        interactive: false
+      }).addTo(mapRef.current!);
+
+      territoryLayersRef.current.push(labelMarker);
     });
   }, [territories, mapReady, user?.id]);
 
