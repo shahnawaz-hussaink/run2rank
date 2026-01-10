@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Play, Trophy, MapPin, TrendingUp, Zap, Heart } from 'lucide-react';
+import { Play, Trophy, MapPin, TrendingUp, Zap, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/BottomNav';
 import { TerritoryMap } from '@/components/TerritoryMap';
 import { PageHeader } from '@/components/PageHeader';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation } from '@/contexts/LocationContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useRuns } from '@/hooks/useRuns';
 import { formatDistance, formatDuration } from '@/lib/formatters';
@@ -13,6 +14,7 @@ import { formatDistance, formatDuration } from '@/lib/formatters';
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentLocation, locationPermission, isLoading: locationLoading, requestLocation } = useLocation();
   const { profile } = useProfile();
   const { runs } = useRuns();
   
@@ -61,14 +63,37 @@ const Index = () => {
             transition={{ delay: 0.1 }}
             className="mx-4 mb-4"
           >
-            <div className="bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden shadow-lg shadow-gray-200/50 border border-white/50">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl overflow-hidden shadow-lg shadow-gray-200/50 border border-white/50 relative">
               <TerritoryMap
                 height="280px"
                 pincode={profile.pincode}
                 showTerritories={true}
-                showCurrentLocation={false}
+                center={currentLocation || undefined}
+                showCurrentLocation={!!currentLocation}
                 zoom={13}
               />
+              {/* Location status indicator */}
+              <div className="absolute bottom-3 left-3 z-[1000]">
+                {locationLoading ? (
+                  <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2 shadow-md">
+                    <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
+                    <span className="text-xs text-gray-600">Getting location...</span>
+                  </div>
+                ) : locationPermission === 'denied' ? (
+                  <button 
+                    onClick={requestLocation}
+                    className="bg-amber-100 hover:bg-amber-200 rounded-full px-3 py-1.5 flex items-center gap-2 shadow-md transition-colors"
+                  >
+                    <MapPin className="w-3 h-3 text-amber-600" />
+                    <span className="text-xs text-amber-700 font-medium">Enable location</span>
+                  </button>
+                ) : currentLocation ? (
+                  <div className="bg-emerald-100 rounded-full px-3 py-1.5 flex items-center gap-2 shadow-md">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs text-emerald-700 font-medium">Live location</span>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </motion.div>
         )}
