@@ -9,10 +9,23 @@ interface RunStatsDisplayProps {
 }
 
 export function RunStatsDisplay({ distance, duration, isLive = false, currentPace }: RunStatsDisplayProps) {
-  // Use current pace if live and available, otherwise calculate average pace
-  const displayPace = isLive && currentPace !== undefined && currentPace > 0
-    ? formatCurrentPace(currentPace)
-    : formatPace(distance, duration);
+  // For live runs: show real-time pace if moving, otherwise show average if we have enough data
+  // For completed runs: show average pace
+  let displayPace: string;
+  
+  if (isLive) {
+    if (currentPace !== undefined && currentPace > 0) {
+      // Show real-time pace when actively moving
+      displayPace = formatCurrentPace(currentPace);
+    } else if (distance > 50 && duration > 10) {
+      // Fall back to average pace if we have enough data
+      displayPace = formatPace(distance, duration);
+    } else {
+      displayPace = '--:--';
+    }
+  } else {
+    displayPace = formatPace(distance, duration);
+  }
 
   return (
     <div className="grid grid-cols-3 gap-3">

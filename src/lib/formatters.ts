@@ -18,13 +18,14 @@ export function formatDuration(seconds: number): string {
 
 // Format pace from average (distance in meters, duration in seconds)
 export function formatPace(meters: number, seconds: number): string {
-  if (meters === 0 || seconds === 0) return '--:--';
+  // Need at least 10 meters and 1 second for meaningful pace
+  if (meters < 10 || seconds < 1) return '--:--';
   
   // Calculate seconds per kilometer
   const secondsPerKm = (seconds / meters) * 1000;
   
-  // Cap at reasonable pace (max 30 min/km for walking)
-  if (secondsPerKm > 1800) return '--:--';
+  // Cap at reasonable pace (max 20 min/km for slow walking, min 2 min/km for sprinting)
+  if (secondsPerKm > 1200 || secondsPerKm < 120) return '--:--';
   
   const paceMinutes = Math.floor(secondsPerKm / 60);
   const paceSeconds = Math.round(secondsPerKm % 60);
@@ -34,7 +35,11 @@ export function formatPace(meters: number, seconds: number): string {
 
 // Format real-time pace from seconds per km
 export function formatCurrentPace(secondsPerKm: number): string {
-  if (secondsPerKm === 0 || secondsPerKm > 1800) return '--:--';
+  // 0 means stationary, show dashes
+  if (secondsPerKm === 0) return '--:--';
+  
+  // Cap at reasonable pace (max 20 min/km, min 2 min/km)
+  if (secondsPerKm > 1200 || secondsPerKm < 120) return '--:--';
   
   const paceMinutes = Math.floor(secondsPerKm / 60);
   const paceSeconds = Math.round(secondsPerKm % 60);
