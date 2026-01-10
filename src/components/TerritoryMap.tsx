@@ -69,6 +69,9 @@ export function TerritoryMap({
 
   const { territories } = useTerritories(showTerritories ? pincode || null : null);
 
+  // Track if we've centered on user location already
+  const hasCenteredRef = useRef(false);
+
   // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -95,16 +98,25 @@ export function TerritoryMap({
         mapRef.current.remove();
         mapRef.current = null;
         setMapReady(false);
+        hasCenteredRef.current = false;
       }
     };
   }, []);
 
-  // Update map center when tracking
+  // Update map center - center once on first location, then only when tracking
   useEffect(() => {
-    if (mapRef.current && center && isTracking) {
+    if (!mapRef.current || !center) return;
+
+    // Always center on first valid location
+    if (!hasCenteredRef.current) {
+      mapRef.current.setView([center.lat, center.lng], zoom);
+      hasCenteredRef.current = true;
+      console.log('Map: Centered on user location', center.lat.toFixed(6), center.lng.toFixed(6));
+    } else if (isTracking) {
+      // While tracking, keep panning to follow user
       mapRef.current.panTo([center.lat, center.lng]);
     }
-  }, [center, isTracking]);
+  }, [center, isTracking, zoom]);
 
   // Update current location marker
   useEffect(() => {

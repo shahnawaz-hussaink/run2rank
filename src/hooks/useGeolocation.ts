@@ -34,31 +34,12 @@ const calculateDistance = (point1: Coordinates, point2: Coordinates): number => 
   return R * c;
 };
 
-// Calculate speed between two points in m/s
-const calculateSpeed = (point1: Coordinates, point2: Coordinates): number => {
-  if (!point1.timestamp || !point2.timestamp) return 0;
-  const timeDiff = (point2.timestamp - point1.timestamp) / 1000; // seconds
-  if (timeDiff <= 0) return 0;
-  const distance = calculateDistance(point1, point2);
-  return distance / timeDiff;
-};
-
-// Smoothing factor for coordinates (simple exponential smoothing)
-const smoothCoordinate = (
-  newValue: number,
-  oldValue: number | undefined,
-  factor: number = 0.3
-): number => {
-  if (oldValue === undefined) return newValue;
-  return oldValue + factor * (newValue - oldValue);
-};
-
-// Constants for filtering
-const MAX_SPEED_MPS = 12; // ~43 km/h - max reasonable running/sprinting speed
-const MIN_ACCURACY_METERS = 100; // Accept readings up to 100m accuracy
-const MIN_MOVEMENT_METERS = 2; // Minimum movement to count (filters GPS drift)
-const SPEED_HISTORY_SIZE = 5; // Number of speed samples to average
-const STATIONARY_SPEED_THRESHOLD = 0.3; // m/s - below this considered stationary
+// Constants for filtering - more lenient for better tracking
+const MAX_SPEED_MPS = 15; // ~54 km/h - max reasonable speed (allows fast running + some margin)
+const MIN_ACCURACY_METERS = 50; // Stricter accuracy for better quality
+const MIN_MOVEMENT_METERS = 3; // Minimum movement to count (filters GPS drift)
+const SPEED_HISTORY_SIZE = 3; // Fewer samples for more responsive pace
+const STATIONARY_SPEED_THRESHOLD = 0.5; // m/s - below this considered stationary
 
 export function useGeolocation() {
   const [state, setState] = useState<GeolocationState>({
@@ -76,7 +57,8 @@ export function useGeolocation() {
   const distanceRef = useRef<number>(0);
   const speedHistoryRef = useRef<number[]>([]);
   const lastValidPositionRef = useRef<Coordinates | null>(null);
-  const smoothedPositionRef = useRef<Coordinates | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const lastUpdateTimeRef = useRef<number>(0);
 
   // Calculate average speed from recent history
   const getAverageSpeed = useCallback((): number => {
@@ -99,11 +81,6 @@ export function useGeolocation() {
         return;
       }
 
-      if (window.isSecureContext === false) {
-        reject(new Error('Geolocation requires a secure connection (HTTPS)'));
-        return;
-      }
-
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const coords: Coordinates = {
@@ -114,16 +91,17 @@ export function useGeolocation() {
             speed: position.coords.speed ?? undefined
           };
           setState(prev => ({ ...prev, currentPosition: coords, error: null }));
+          console.log('Initial position acquired:', coords.lat.toFixed(6), coords.lng.toFixed(6), `accuracy: ${coords.accuracy?.toFixed(0)}m`);
           resolve(coords);
         },
         (error) => {
           let errorMessage = 'Failed to get location';
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = 'Location permission denied. Please enable location access in your device settings.';
+              errorMessage = 'Location permission denied. Please enable location access.';
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Location information unavailable. Please ensure GPS is enabled.';
+              errorMessage = 'Location unavailable. Please enable GPS.';
               break;
             case error.TIMEOUT:
               errorMessage = 'Location request timed out. Please try again.';
@@ -142,7 +120,8 @@ export function useGeolocation() {
   }, []);
 
   const processPosition = useCallback((position: GeolocationPosition) => {
-    const rawCoord: Coordinates = {
+    const now = Date.now();
+    const coords: Coordinates = {
       lat: position.coords.latitude,
       lng: position.coords.longitude,
       accuracy: position.coords.accuracy,
@@ -150,78 +129,97 @@ export function useGeolocation() {
       speed: position.coords.speed ?? undefined
     };
 
-    // Filter by accuracy - reject very inaccurate readings
+    // Throttle updates to prevent overwhelming the UI (min 500ms between updates)
+    if (now - lastUpdateTimeRef.current < 500) {
+      return;
+    }
+    lastUpdateTimeRef.current = now;
+
+    // Filter by accuracy - reject very inaccurate readings but be lenient
     if (position.coords.accuracy > MIN_ACCURACY_METERS) {
-      console.log(`GPS: Rejected - accuracy too low (${position.coords.accuracy}m)`);
+      console.log(`GPS: Skipped - low accuracy (${position.coords.accuracy.toFixed(0)}m > ${MIN_ACCURACY_METERS}m)`);
+      // Still update position for display, just don't track distance
+      setState(prev => ({ ...prev, currentPosition: coords }));
       return;
     }
 
-    // Apply coordinate smoothing
-    const smoothedCoord: Coordinates = {
-      lat: smoothCoordinate(rawCoord.lat, smoothedPositionRef.current?.lat, 0.4),
-      lng: smoothCoordinate(rawCoord.lng, smoothedPositionRef.current?.lng, 0.4),
-      accuracy: rawCoord.accuracy,
-      timestamp: rawCoord.timestamp,
-      speed: rawCoord.speed
-    };
-    smoothedPositionRef.current = smoothedCoord;
-
-    // Calculate speed from position change if device doesn't provide it
-    let calculatedSpeed = rawCoord.speed ?? 0;
-    if (lastValidPositionRef.current && lastValidPositionRef.current.timestamp) {
-      const positionSpeed = calculateSpeed(lastValidPositionRef.current, smoothedCoord);
-      // Use device speed if available and reasonable, otherwise use calculated
-      if (rawCoord.speed === undefined || rawCoord.speed === null) {
-        calculatedSpeed = positionSpeed;
-      } else {
-        // Average device speed with calculated for better accuracy
-        calculatedSpeed = (rawCoord.speed + positionSpeed) / 2;
-      }
-    }
-
-    // Filter unrealistic speeds (teleportation/GPS jumps)
-    if (calculatedSpeed > MAX_SPEED_MPS && lastValidPositionRef.current) {
-      console.log(`GPS: Rejected - unrealistic speed (${(calculatedSpeed * 3.6).toFixed(1)} km/h)`);
+    // FIRST POINT - always add it to start the path
+    if (!lastValidPositionRef.current) {
+      pathRef.current = [coords];
+      lastValidPositionRef.current = coords;
+      startTimeRef.current = position.timestamp;
+      
+      setState(prev => ({
+        ...prev,
+        currentPosition: coords,
+        path: [coords],
+        distance: 0,
+        currentSpeed: 0,
+        currentPace: 0,
+        error: null
+      }));
+      
+      console.log('GPS: First point recorded', coords.lat.toFixed(6), coords.lng.toFixed(6));
       return;
     }
 
     // Calculate distance from last valid point
-    let segmentDistance = 0;
-    if (lastValidPositionRef.current) {
-      segmentDistance = calculateDistance(lastValidPositionRef.current, smoothedCoord);
-      
-      // Filter tiny movements (GPS drift when stationary)
-      if (segmentDistance < MIN_MOVEMENT_METERS) {
-        // Still update current position for display, but don't add to path/distance
-        setState(prev => ({
-          ...prev,
-          currentPosition: smoothedCoord,
-          currentSpeed: getAverageSpeed(),
-          currentPace: speedToPace(getAverageSpeed())
-        }));
-        return;
-      }
-
-      // Add distance
-      distanceRef.current += segmentDistance;
+    const segmentDistance = calculateDistance(lastValidPositionRef.current, coords);
+    
+    // Calculate time difference in seconds
+    const timeDiff = (position.timestamp - (lastValidPositionRef.current.timestamp || position.timestamp)) / 1000;
+    
+    // Calculate instantaneous speed
+    let instantSpeed = timeDiff > 0 ? segmentDistance / timeDiff : 0;
+    
+    // Use device-reported speed if available and reasonable
+    if (position.coords.speed !== null && position.coords.speed >= 0 && position.coords.speed < MAX_SPEED_MPS) {
+      // Blend device speed with calculated speed for stability
+      instantSpeed = (instantSpeed + position.coords.speed) / 2;
     }
 
+    // Filter unrealistic speeds (teleportation/GPS jumps)
+    if (instantSpeed > MAX_SPEED_MPS) {
+      console.log(`GPS: Skipped - unrealistic speed (${(instantSpeed * 3.6).toFixed(1)} km/h)`);
+      // Still update display position
+      setState(prev => ({ ...prev, currentPosition: coords }));
+      return;
+    }
+
+    // Filter tiny movements (GPS drift when stationary)
+    if (segmentDistance < MIN_MOVEMENT_METERS) {
+      // Update position for display but don't add to path/distance
+      const avgSpeed = getAverageSpeed();
+      setState(prev => ({
+        ...prev,
+        currentPosition: coords,
+        currentSpeed: avgSpeed,
+        currentPace: speedToPace(avgSpeed)
+      }));
+      return;
+    }
+
+    // Valid movement - add distance
+    distanceRef.current += segmentDistance;
+
     // Update speed history
-    speedHistoryRef.current.push(calculatedSpeed);
-    if (speedHistoryRef.current.length > SPEED_HISTORY_SIZE) {
-      speedHistoryRef.current.shift();
+    if (instantSpeed > STATIONARY_SPEED_THRESHOLD) {
+      speedHistoryRef.current.push(instantSpeed);
+      if (speedHistoryRef.current.length > SPEED_HISTORY_SIZE) {
+        speedHistoryRef.current.shift();
+      }
     }
 
     // Add to path
-    pathRef.current.push(smoothedCoord);
-    lastValidPositionRef.current = smoothedCoord;
+    pathRef.current.push(coords);
+    lastValidPositionRef.current = coords;
 
     const avgSpeed = getAverageSpeed();
     const currentPace = speedToPace(avgSpeed);
 
     setState(prev => ({
       ...prev,
-      currentPosition: smoothedCoord,
+      currentPosition: coords,
       path: [...pathRef.current],
       distance: distanceRef.current,
       currentSpeed: avgSpeed,
@@ -229,7 +227,10 @@ export function useGeolocation() {
       error: null
     }));
 
-    console.log(`GPS: Valid point - Distance: ${distanceRef.current.toFixed(0)}m, Speed: ${(avgSpeed * 3.6).toFixed(1)} km/h, Accuracy: ${position.coords.accuracy.toFixed(0)}m`);
+    console.log(
+      `GPS: +${segmentDistance.toFixed(1)}m | Total: ${distanceRef.current.toFixed(0)}m | ` +
+      `Speed: ${(avgSpeed * 3.6).toFixed(1)}km/h | Accuracy: ${position.coords.accuracy.toFixed(0)}m`
+    );
   }, [getAverageSpeed, speedToPace]);
 
   const startTracking = useCallback(() => {
@@ -243,7 +244,8 @@ export function useGeolocation() {
     distanceRef.current = 0;
     speedHistoryRef.current = [];
     lastValidPositionRef.current = null;
-    smoothedPositionRef.current = null;
+    startTimeRef.current = null;
+    lastUpdateTimeRef.current = 0;
 
     setState(prev => ({
       ...prev,
@@ -254,6 +256,8 @@ export function useGeolocation() {
       currentPace: 0,
       error: null
     }));
+
+    console.log('GPS: Starting tracking...');
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       processPosition,
@@ -267,14 +271,16 @@ export function useGeolocation() {
             errorMessage = 'GPS signal lost. Move to an open area.';
             break;
           case error.TIMEOUT:
-            errorMessage = 'GPS timeout. Retrying...';
-            break;
+            errorMessage = 'GPS timeout. Trying to reconnect...';
+            // Don't set error for timeout, just log it - GPS will retry
+            console.log(errorMessage);
+            return;
         }
         setState(prev => ({ ...prev, error: errorMessage }));
       },
       {
         enableHighAccuracy: true,
-        timeout: 15000,
+        timeout: 10000,
         maximumAge: 0 // Always get fresh position
       }
     );
@@ -288,6 +294,8 @@ export function useGeolocation() {
 
     const finalPath = [...pathRef.current];
     const finalDistance = distanceRef.current;
+
+    console.log(`GPS: Tracking stopped. Final distance: ${finalDistance.toFixed(0)}m, Points: ${finalPath.length}`);
 
     setState(prev => ({
       ...prev,
@@ -304,7 +312,8 @@ export function useGeolocation() {
     distanceRef.current = 0;
     speedHistoryRef.current = [];
     lastValidPositionRef.current = null;
-    smoothedPositionRef.current = null;
+    startTimeRef.current = null;
+    lastUpdateTimeRef.current = 0;
     
     setState(prev => ({
       ...prev,
