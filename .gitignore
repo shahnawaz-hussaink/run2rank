@@ -1,4 +1,4 @@
-# Root .gitignore for Run2Rank monorepo
+# Root .gitignore for PyFit monorepo
 
 # IDE
 .vscode/

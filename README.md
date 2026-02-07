@@ -1,11 +1,11 @@
-# Run2Rank - Fitness Tracking & Territory Competition Platform
+# PyFit - Fitness Tracking & Territory Competition Platform
 
 Track your runs, claim your territory, and compete on local leaderboards.
 
 ## Project Structure
 
 ```
-run2rank/
+pyfit/
 ├── client/          # Frontend React application
 ├── server/          # Backend Node.js API (optional local development)
 └── database/        # Supabase configuration and migrations
@@ -102,7 +102,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
 
 ```env
 PORT=3001
-DATABASE_PATH=./db/run2rank.db
+DATABASE_PATH=./db/pyfit.db
 JWT_SECRET=your-secret-key
 JWT_ACCESS_EXPIRY=24h
 JWT_REFRESH_EXPIRY=7d
@@ -140,4 +140,4 @@ For issues or questions, please open an issue on the repository.
 
 ---
 
-**Run2Rank** - Claim your territory. Run to the top.
+**PyFit** - Claim your territory. Run to the top.

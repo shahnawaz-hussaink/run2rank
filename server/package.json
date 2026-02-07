@@ -1,7 +1,7 @@
 {
-  "name": "run2rank-backend",
+  "name": "pyfit-backend",
   "version": "1.0.0",
-  "description": "Local backend server for Run2Rank fitness application",
+  "description": "Local backend server for PyFit fitness application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

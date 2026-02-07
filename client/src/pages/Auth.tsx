@@ -147,7 +147,7 @@ export default function AuthPage() {
               })
               .eq('user_id', newUser.id);
           }
-          toast.success('Account created! Welcome to Run2Rank.');
+          toast.success('Account created! Welcome to PyFit.');
         }
       }
     } finally {
@@ -180,7 +180,7 @@ export default function AuthPage() {
               <Zap className="w-10 h-10 text-white" />
             </motion.div>
             <h1 className="text-3xl font-bold font-display bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-              Run2Rank
+              PyFit
             </h1>
             <p className="text-gray-500">Claim your territory. Run to the top.</p>
           </div>
@@ -404,7 +404,7 @@ export default function AuthPage() {
             <div className="mt-6 pt-4 border-t border-gray-100">
               <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 rounded-2xl p-4 text-center">
                 <p className="text-sm text-gray-600 mb-2">
-                  {isLogin ? "New to Run2Rank?" : "Already a runner?"}
+                  {isLogin ? "New to PyFit?" : "Already a runner?"}
                 </p>
                 <button
                   type="button"

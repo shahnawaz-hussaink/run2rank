@@ -1,14 +1,14 @@
-# Deployment Guide - Run2Rank
+# Deployment Guide - PyFit
 
 ## 🚀 Quick Deploy
 
-Your Run2Rank app is now on GitHub: https://github.com/shahnawaz-hussaink/run2rank
+Your PyFit app is now on GitHub: https://github.com/shahnawaz-hussaink/pyFit
 
 ### Option 1: Vercel (Recommended - Easiest)
 
 1. Go to https://vercel.com
 2. Click "Add New" → "Project"
-3. Import from GitHub: `shahnawaz-hussaink/run2rank`
+3. Import from GitHub: `shahnawaz-hussaink/pyFit`
 4. Configure:
    - **Root Directory**: `client`
    - **Framework Preset**: Vite
@@ -22,7 +22,7 @@ Your Run2Rank app is now on GitHub: https://github.com/shahnawaz-hussaink/run2ra
    ```
 6. Click **"Deploy"**
 
-✅ Your app will be live at `https://run2rank.vercel.app` in 2 minutes!
+✅ Your app will be live at `https://pyfit.vercel.app` in 2 minutes!
 
 ---
 
@@ -30,7 +30,7 @@ Your Run2Rank app is now on GitHub: https://github.com/shahnawaz-hussaink/run2ra
 
 1. Go to https://netlify.com
 2. Click "Add new site" → "Import an existing project"
-3. Connect to GitHub and select `shahnawaz-hussaink/run2rank`
+3. Connect to GitHub and select `shahnawaz-hussaink/pyFit`
 4. Configure:
    - **Base directory**: `client`
    - **Build command**: `npm run build`
@@ -38,7 +38,7 @@ Your Run2Rank app is now on GitHub: https://github.com/shahnawaz-hussaink/run2ra
 5. Add Environment Variables (same as Vercel)
 6. Click **"Deploy site"**
 
-✅ Live at `https://run2rank.netlify.app`
+✅ Live at `https://pyfit.netlify.app`
 
 ---
 
@@ -82,7 +82,7 @@ jobs:
 4. Add env variables in repo secrets
 5. Push to trigger deployment
 
-✅ Live at `https://shahnawaz-hussaink.github.io/run2rank`
+✅ Live at `https://shahnawaz-hussaink.github.io/pyFit`
 
 ---
 
@@ -147,7 +147,7 @@ In Supabase → **API** → **CORS**:
 
 ### Vercel
 1. Go to Project Settings → Domains
-2. Add your domain (e.g., `run2rank.app`)
+2. Add your domain (e.g., `pyfit.app`)
 3. Follow DNS configuration
 4. SSL auto-configured
 
@@ -324,7 +324,7 @@ Upgrade when you hit:
 ## 📞 Support
 
 **Deployed URL**: Will be available after deployment
-**GitHub Repo**: https://github.com/shahnawaz-hussaink/run2rank
+**GitHub Repo**: https://github.com/shahnawaz-hussaink/pyFit
 **Supabase Dashboard**: https://app.supabase.com/project/vapvyuhkbchcnplwwelu
 
 ---
@@ -337,4 +337,4 @@ Upgrade when you hit:
 4. ✅ Test full user flow
 5. ✅ Share with users! 🎉
 
-**Run2Rank** - Now live on the web! 🏃‍♂️💨
+**PyFit** - Now live on the web! 🏃‍♂️💨

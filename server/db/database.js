@@ -5,7 +5,7 @@ const path = require('path');
 let db = null;
 
 function initDatabase() {
-  const dbPath = process.env.DATABASE_PATH || './db/run2rank.db';
+  const dbPath = process.env.DATABASE_PATH || './db/pyfit.db';
   const dbDir = path.dirname(dbPath);
 
   // Create db directory if it doesn't exist

@@ -1,4 +1,4 @@
--- Run2Rank Database Schema
+-- PyFit Database Schema
 -- SQLite Database Schema matching Supabase structure
 
 -- Profiles Table

@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
 
-/* Run2Rank Design System - Athletic Dark Theme */
+/* PyFit Design System - Athletic Dark Theme */
 @layer base {
   :root {
     /* Dark immersive background for outdoor runs */
@@ -46,7 +46,7 @@
 
     --radius: 0.75rem;
 
-    /* Custom Run2Rank tokens */
+    /* Custom PyFit tokens */
     --glow-primary: 160 84% 45%;
     --glow-accent: 185 100% 50%;
     --surface-elevated: 220 18% 14%;
