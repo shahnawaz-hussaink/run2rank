@@ -16,6 +16,7 @@ run2rank/
 ### Prerequisites
 
 - Node.js 18+ and npm
+- VS Code 
 - A Supabase account (for database)
 
 ### 1. Frontend Setup
